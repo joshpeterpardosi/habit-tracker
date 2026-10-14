@@ -14,6 +14,7 @@ curl -X POST localhost:8000/habits/<id>/check-in
 curl localhost:8000/habits/<id>/streak
 curl -X PATCH localhost:8000/habits/<id> -d '{"name":"Read books"}'
 curl -X DELETE localhost:8000/habits/<id>
+curl localhost:8000/habits
 ```
 `HABIT_TODAY` is optional (defaults to the real date). Data model: `habit_id`, `name`, `created_at`, `check_ins` only. Streak = consecutive days ending today or yesterday, 0 otherwise; computed per request, never stored.
 
@@ -30,6 +31,7 @@ No dependencies. Each test spawns `src/server.py` as a subprocess on a free port
 - `test_data_persists_across_restart`: create + check-in, SIGKILL the process, new process (different PID) on the same file returns the same check-ins and streak; dedupe still holds; stored record has exactly the four fields.
 - `test_rename_habit`: PATCH returns 200 with the name trimmed and every other field unchanged; blank or missing name gives 400, unknown id gives 404; after a restart the streak is intact and the file holds exactly the renamed record.
 - `test_delete_habit`: DELETE returns 200 with the removed habit; afterwards its streak and a second DELETE both return 404, also after a restart; the other habit is untouched and is the only record left on disk.
+- `test_list_habits`: GET `/habits` returns `{"habits": []}` with no data file; after two creates and one check-in it lists both in creation order with all stored fields plus computed `streak` (1 and 0), same after a restart; unknown paths still 404; the file holds exactly the four fields per record (no `streak`).
 
 ## Add a case
 1. Streak case: add a habit to `fixtures/streak_cases.json` (or a new fixture file) and its expected streak to the `expected` dict, or copy the new fixture in a new test.

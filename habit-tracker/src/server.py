@@ -82,6 +82,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send(404, {"error": "not found"})
 
     def do_GET(self):
+        if self.path == "/habits":
+            t = today()
+            return self.send(200, {"habits": [dict(h, streak=streak(h["check_ins"], t))
+                                              for h in load()["habits"]]})
         m = re.fullmatch(r"/habits/([^/]+)/streak", self.path)
         if not m:
             return self.send(404, {"error": "not found"})

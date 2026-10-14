@@ -135,6 +135,21 @@ class HabitTrackerTest(unittest.TestCase):
         with open(self.data) as f:
             self.assertEqual([h["habit_id"] for h in json.load(f)["habits"]], [kept])
 
+    def test_list_habits(self):
+        s1 = self.start("2026-10-05")
+        self.assertEqual(s1.call("GET", "/habits"), (200, {"habits": []}))
+        a = s1.call("POST", "/habits", {"name": "Read"})[1]
+        b = s1.call("POST", "/habits", {"name": "Run"})[1]
+        a = s1.call("POST", f"/habits/{a['habit_id']}/check-in")[1]
+        want = {"habits": [dict(a, streak=1), dict(b, streak=0)]}
+        self.assertEqual(s1.call("GET", "/habits"), (200, want))
+        self.assertEqual(s1.call("GET", "/nope")[0], 404)
+        s1.kill()
+        s2 = self.start("2026-10-05")
+        self.assertEqual(s2.call("GET", "/habits"), (200, want))
+        with open(self.data) as f:  # exactly the four stored fields, no streak
+            self.assertEqual(json.load(f)["habits"], [a, b])
+
 
 if __name__ == "__main__":
     unittest.main()
