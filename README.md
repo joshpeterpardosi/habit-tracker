@@ -34,7 +34,7 @@ cd habit-tracker && python -m unittest discover -s tests -v
 Each test starts the real server as a subprocess on a free port with a temp data file and talks real HTTP.
 
 ## Verification
-`docs/verify.md` describes how to run and verify the server against a live process. The tests prove:
+`.cursor/skills/habit-tracker-verify/SKILL.md` describes how to run and verify the server against a live process. The tests prove:
 - duplicate same-day check-in returns 409 and changes nothing (API and on disk);
 - streaks reset after a missed day, count unbroken runs, and still count a run ending yesterday;
 - the same rule holds through real check-ins across server restarts with different dates;
