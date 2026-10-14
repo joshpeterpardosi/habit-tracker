@@ -104,6 +104,22 @@ class HabitTrackerTest(unittest.TestCase):
         with open(self.data) as f:
             self.assertEqual(set(json.load(f)["habits"][0]), {"habit_id", "name", "created_at", "check_ins"})
 
+    def test_rename_habit(self):
+        s1 = self.start("2026-10-05")
+        hid = s1.call("POST", "/habits", {"name": "Read"})[1]["habit_id"]
+        before = s1.call("POST", f"/habits/{hid}/check-in")[1]
+        code, h = s1.call("PATCH", f"/habits/{hid}", {"name": "  Read books  "})
+        self.assertEqual(code, 200)
+        self.assertEqual(h, dict(before, name="Read books"))
+        self.assertEqual(s1.call("PATCH", f"/habits/{hid}", {"name": "  "})[0], 400)
+        self.assertEqual(s1.call("PATCH", f"/habits/{hid}", {})[0], 400)
+        self.assertEqual(s1.call("PATCH", "/habits/nope", {"name": "X"})[0], 404)
+        s1.kill()
+        s2 = self.start("2026-10-05")
+        self.assertEqual(s2.call("GET", f"/habits/{hid}/streak")[1]["streak"], 1)
+        with open(self.data) as f:
+            self.assertEqual(json.load(f)["habits"], [h])
+
 
 if __name__ == "__main__":
     unittest.main()

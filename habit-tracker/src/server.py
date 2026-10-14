@@ -91,6 +91,25 @@ class Handler(BaseHTTPRequestHandler):
         self.send(200, {"habit_id": h["habit_id"], "streak": streak(h["check_ins"], today()),
                         "check_ins": h["check_ins"]})
 
+    def do_PATCH(self):
+        m = re.fullmatch(r"/habits/([^/]+)", self.path)
+        if not m:
+            return self.send(404, {"error": "not found"})
+        data = load()
+        h = self.find(data, m.group(1))
+        if not h:
+            return self.send(404, {"error": "habit not found"})
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            name = json.loads(self.rfile.read(n) or b"{}").get("name")
+        except (ValueError, AttributeError):
+            return self.send(400, {"error": "invalid JSON"})
+        if not isinstance(name, str) or not name.strip():
+            return self.send(400, {"error": "name required"})
+        h["name"] = name.strip()
+        save(data)
+        self.send(200, h)
+
     def log_message(self, *a):
         pass
 

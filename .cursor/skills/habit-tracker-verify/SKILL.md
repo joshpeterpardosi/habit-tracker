@@ -12,6 +12,7 @@ HABIT_DATA_FILE=/tmp/habits.json HABIT_TODAY=2026-10-05 python3 src/server.py 80
 curl -X POST localhost:8000/habits -d '{"name":"Read"}'
 curl -X POST localhost:8000/habits/<id>/check-in
 curl localhost:8000/habits/<id>/streak
+curl -X PATCH localhost:8000/habits/<id> -d '{"name":"Read books"}'
 ```
 `HABIT_TODAY` is optional (defaults to the real date). Data model: `habit_id`, `name`, `created_at`, `check_ins` only. Streak = consecutive days ending today or yesterday, 0 otherwise; computed per request, never stored.
 
@@ -26,6 +27,7 @@ No dependencies. Each test spawns `src/server.py` as a subprocess on a free port
 - `test_streak_resets_after_missed_day`: with `fixtures/streak_cases.json` and today=2026-10-05: a gap resets (1), unbroken run counts (5), run ending yesterday still counts (3), last check-in older than yesterday gives 0.
 - `test_missed_day_live_reset`: same rule produced through real check-ins over several server processes with different `HABIT_TODAY`.
 - `test_data_persists_across_restart`: create + check-in, SIGKILL the process, new process (different PID) on the same file returns the same check-ins and streak; dedupe still holds; stored record has exactly the four fields.
+- `test_rename_habit`: PATCH returns 200 with the name trimmed and every other field unchanged; blank or missing name gives 400, unknown id gives 404; after a restart the streak is intact and the file holds exactly the renamed record.
 
 ## Add a case
 1. Streak case: add a habit to `fixtures/streak_cases.json` (or a new fixture file) and its expected streak to the `expected` dict, or copy the new fixture in a new test.
