@@ -119,6 +119,21 @@ class HabitTrackerTest(unittest.TestCase):
         self.assertEqual(s2.call("GET", f"/habits/{hid}/streak")[1]["streak"], 1)
         with open(self.data) as f:
             self.assertEqual(json.load(f)["habits"], [h])
+    def test_delete_habit(self):
+        s1 = self.start("2026-10-05")
+        gone = s1.call("POST", "/habits", {"name": "Read"})[1]["habit_id"]
+        kept = s1.call("POST", "/habits", {"name": "Run"})[1]["habit_id"]
+        code, h = s1.call("DELETE", f"/habits/{gone}")
+        self.assertEqual(code, 200)
+        self.assertEqual(h["habit_id"], gone)
+        self.assertEqual(s1.call("GET", f"/habits/{gone}/streak")[0], 404)
+        self.assertEqual(s1.call("DELETE", f"/habits/{gone}")[0], 404)
+        s1.kill()
+        s2 = self.start("2026-10-05")
+        self.assertEqual(s2.call("GET", f"/habits/{gone}/streak")[0], 404)
+        self.assertEqual(s2.call("GET", f"/habits/{kept}/streak")[0], 200)
+        with open(self.data) as f:
+            self.assertEqual([h["habit_id"] for h in json.load(f)["habits"]], [kept])
 
 
 if __name__ == "__main__":
