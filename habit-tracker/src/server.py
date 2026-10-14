@@ -82,6 +82,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send(404, {"error": "not found"})
 
     def do_GET(self):
+        if self.path == "/habits":
+            t = today()
+            return self.send(200, {"habits": [dict(h, streak=streak(h["check_ins"], t))
+                                              for h in load()["habits"]]})
         m = re.fullmatch(r"/habits/([^/]+)/streak", self.path)
         if not m:
             return self.send(404, {"error": "not found"})
@@ -107,6 +111,18 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(name, str) or not name.strip():
             return self.send(400, {"error": "name required"})
         h["name"] = name.strip()
+        save(data)
+        self.send(200, h)
+
+    def do_DELETE(self):
+        m = re.fullmatch(r"/habits/([^/]+)", self.path)
+        if not m:
+            return self.send(404, {"error": "not found"})
+        data = load()
+        h = self.find(data, m.group(1))
+        if not h:
+            return self.send(404, {"error": "habit not found"})
+        data["habits"].remove(h)
         save(data)
         self.send(200, h)
 
